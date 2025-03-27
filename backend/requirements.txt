@@ -1,0 +1,10 @@
+PyMuPDF==1.21.1
+spacy==3.7.2
+python-docx==0.8.11
+requests==2.31.0
+numpy==1.26.4
+scikit-learn==1.4.0
+fuzzywuzzy==0.18.0
+beautifulsoup4==4.12.3
+selenium==4.17.0
+webdriver-manager==4.0.1

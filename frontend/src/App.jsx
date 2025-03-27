@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+// import { Card, CardContent } from "@/components/ui/card";
 
 export default function ResumeScanner() {
   const [file, setFile] = useState(null);
@@ -34,12 +34,12 @@ export default function ResumeScanner() {
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-4">
       <h1 className="text-xl font-bold">Resume Scanner</h1>
-      <Input type="file" onChange={handleFileChange} />
-      <Button onClick={handleUpload} disabled={loading}>
+      <input type="file" onChange={handleFileChange} />
+      <button onClick={handleUpload} disabled={loading}>
         {loading ? "Processing..." : "Upload & Scan"}
-      </Button>
-      <Card>
-        <CardContent className="p-4 space-y-2">
+      </button>
+      <div>
+        <div className="p-4 space-y-2">
           <h2 className="text-lg font-semibold">Job Listings</h2>
           <ul className="list-disc pl-4">
             {jobs.length > 0 ? (
@@ -54,8 +54,8 @@ export default function ResumeScanner() {
               <p>No jobs found.</p>
             )}
           </ul>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
