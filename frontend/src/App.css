@@ -1,3 +1,4 @@
+/* Your original styles */
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,112 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* New styles for Resume Scanner */
+.resume-scanner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.file-input {
+  margin: 1rem 0;
+  padding: 0.5rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.error {
+  color: #ff3333;
+  margin: 1rem 0;
+}
+
+.results {
+  text-align: left;
+  margin-top: 2rem;
+  background: #f8f8f8;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.skill-tag {
+  background: #e0e0ff;
+  color: #3a3aff;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.jobs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.job-card {
+  background: white;
+  padding: 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.job-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.job-company {
+  color:  #3a3aff;
+  font-weight: 500;
+  margin: 0.5rem 0;
+}
+
+.job-location {
+  color:  #646cff;
+  font-size: 0.9rem;
+}
+
+.job-link {
+  color:  #3a3aff;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 0.8rem;
+  font-weight: 500;
+}
+
+.job-link:hover {
+  text-decoration: underline;
+  filter: drop-shadow(0 0 2em  #646cffaa);
+}
+
+/* Load More button that matches your theme */
+.load-more {
+  background-color:  #3a3aff;
+  margin: 1.5rem auto;
+  display: block;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: filter 300ms;
+}
+
+.load-more:hover {
+  filter: drop-shadow(0 0 2em  #646cffaa);
+}
+
+.load-more:disabled {
+  background-color:  #bdc3c7;
+  cursor: not-allowed;
+  filter: none;
 }

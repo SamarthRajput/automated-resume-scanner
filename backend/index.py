@@ -1,140 +1,167 @@
-import fitz  # PyMuPDF
+import os
 import re
+import fitz
 import spacy
 import docx
-import requests
-import numpy as np
-import tkinter as tk
-from tkinter import filedialog, messagebox, Toplevel, scrolledtext
-from sklearn.feature_extraction.text import TfidfVectorizer
-from fuzzywuzzy import fuzz
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 import time
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from bs4 import BeautifulSoup
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+CORS(app)
+
+# Configuration
+app.config['UPLOAD_FOLDER'] = './uploads'
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Load NLP model
 nlp = spacy.load("en_core_web_sm")
 
-# Predefined list of skills (extended)
-skill_keywords = set([
-    "Python", "Java", "C++", "Machine Learning", "Deep Learning", "Data Science", "SQL", "React", 
-    "Node.js", "Django", "Flask", "TensorFlow", "Keras", "NLP", "Pandas", "NumPy", "Git", "AWS",
-    "JavaScript", "TypeScript", "HTML", "CSS", "MongoDB", "NextJs", "PostgreSQL", "Prisma", "CI/CD",
-    "VS Code", "Google Cloud Platform", "Cloudflare", "Turbo Repo", "Docker", "Next Auth", "JWT", 
-    "Recoil", "Aceternity UI", "Mongoose", "TailwindCSS"
-])
+# Skills database
+SKILLS = {
+    "Python", "Java", "JavaScript", "React", "Node.js", "SQL", "AWS",
+    "Docker", "Machine Learning", "Data Science", "Flask", "Django",
+    "MongoDB", "PostgreSQL", "Git", "HTML", "CSS", "TypeScript"
+}
 
 def extract_text_from_pdf(pdf_path):
-    """Extracts text from a PDF file."""
-    doc = fitz.open(pdf_path)
-    text = ""
-    for page in doc:
-        text += page.get_text("text") + "\n"
-    return text
+    try:
+        doc = fitz.open(pdf_path)
+        return " ".join(page.get_text() for page in doc)
+    except Exception as e:
+        raise Exception(f"PDF extraction failed: {str(e)}")
 
 def extract_text_from_docx(docx_path):
-    """Extracts text from a DOCX file."""
-    doc = docx.Document(docx_path)
-    text = "\n".join([para.text for para in doc.paragraphs])
-    return text
+    try:
+        doc = docx.Document(docx_path)
+        return " ".join(para.text for para in doc.paragraphs)
+    except Exception as e:
+        raise Exception(f"DOCX extraction failed: {str(e)}")
 
-def extract_email(text):
-    """Extract email from text using regex."""
-    email_pattern = r'[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+'
-    matches = re.findall(email_pattern, text)
-    return matches[0] if matches else None
-
-def extract_phone(text):
-    """Extract phone number from text using regex."""
-    phone_pattern = r'\b\d{10}\b|\(\d{3}\)\s?\d{3}-\d{4}'
-    matches = re.findall(phone_pattern, text)
-    return matches[0] if matches else None
-
-def extract_skills_spacy(text):
-    """Extracts relevant skills using NLP with spaCy."""
-    doc = nlp(text)
-    found_skills = set()
-    for token in doc:
-        if token.text in skill_keywords:
-            found_skills.add(token.text)
-    return list(found_skills)
-
-def scrape_jobs(skills):
-    """Scrapes job listings based on extracted skills."""
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-    job_links = []
-    
-    for skill in skills:
-        search_url = f"https://www.linkedin.com/jobs/search/?keywords={skill}"
-        driver.get(search_url)
-        time.sleep(5)
-        
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        job_elements = soup.find_all("a", class_="base-card__full-link")
-        for job in job_elements[:5]:  # Get top 5 jobs per skill
-            job_links.append(job['href'])
-    
-    driver.quit()
-    return job_links
-
-def parse_resume(file_path, file_type="pdf"):
-    """Main function to parse resume and extract relevant information."""
-    text = extract_text_from_pdf(file_path) if file_type == "pdf" else extract_text_from_docx(file_path)
-    email = extract_email(text)
-    phone = extract_phone(text)
-    skills = extract_skills_spacy(text)
-    jobs = scrape_jobs(skills) if skills else []
-    
+def extract_contact_info(text):
+    email = re.search(r'[\w\.-]+@[\w\.-]+', text)
+    phone = re.search(r'(\+?\d{1,3}[-\.\s]?)?\(?\d{3}\)?[-\.\s]?\d{3}[-\.\s]?\d{4}', text)
     return {
-        "Email": email,
-        "Phone": phone,
-        "Skills": skills,
-        "Jobs": jobs
+        'email': email.group(0) if email else None,
+        'phone': phone.group(0) if phone else None
     }
 
-def browse_file():
-    """Function to open file dialog and select resume."""
-    file_path = filedialog.askopenfilename(filetypes=[("PDF Files", "*.pdf"), ("Word Documents", "*.docx")])
-    if file_path:
-        file_label.config(text=f"Selected File: {file_path}")
-        file_extension = file_path.split(".")[-1]
-        file_type = "pdf" if file_extension == "pdf" else "docx"
-        result = parse_resume(file_path, file_type)
-        display_results(result)
+def extract_skills(text):
+    text_lower = text.lower()
+    return [skill for skill in SKILLS if skill.lower() in text_lower]
 
-def display_results(result):
-    """Function to display extracted information in a new GUI window."""
-    result_window = Toplevel(root)
-    result_window.title("Extracted Resume Details")
-    result_window.geometry("600x400")
+def scrape_indian_jobs(skills, page=1):
+    if not skills:
+        return []
     
-    result_text = scrolledtext.ScrolledText(result_window, height=20, width=70)
-    result_text.pack(pady=10)
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
     
-    result_text.insert(tk.END, f"Email: {result['Email']}\n")
-    result_text.insert(tk.END, f"Phone: {result['Phone']}\n")
-    result_text.insert(tk.END, f"Skills: {', '.join(result['Skills']) if result['Skills'] else 'No skills found'}\n")
+    driver = None
+    try:
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()),
+            options=options
+        )
+        
+        job_listings = []
+        for skill in skills[:3]:  # Limit to top 3 skills
+            url = (f"https://www.linkedin.com/jobs/search/"
+                  f"?keywords={skill}&location=India&start={(page-1)*25}")
+            driver.get(url)
+            time.sleep(3)
+            
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            jobs = soup.find_all("div", class_="base-card")
+            
+            for job in jobs:
+                # Ensure it's an India-based job
+                location = job.find("span", class_="job-search-card__location")
+                if location and "India" in location.text:
+                    title = job.find("h3", class_="base-search-card__title")
+                    company = job.find("h4", class_="base-search-card__subtitle")
+                    link = job.find("a", class_="base-card__full-link")
+                    
+                    if all([title, company, link]):
+                        job_listings.append({
+                            "title": title.text.strip(),
+                            "company": company.text.strip(),
+                            "url": link['href'].split('?')[0],  # Clean URL
+                            "location": location.text.strip()
+                        })
+        
+        return job_listings[:20]  # Limit to 20 jobs per request
+    except Exception as e:
+        app.logger.error(f"Scraping error: {str(e)}")
+        return []
+    finally:
+        if driver:
+            driver.quit()
+
+@app.route('/upload', methods=['POST'])
+def upload_resume():
+    if 'resume' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
     
-    result_text.insert(tk.END, "\nJob Listings:\n")
-    for job in result['Jobs']:
-        result_text.insert(tk.END, f"{job}\n")
+    file = request.files['resume']
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
     
-    close_button = tk.Button(result_window, text="Close", command=result_window.destroy, font=("Arial", 12))
-    close_button.pack(pady=5)
+    try:
+        # Save file temporarily
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        # Extract text
+        if filename.endswith('.pdf'):
+            text = extract_text_from_pdf(filepath)
+        else:
+            text = extract_text_from_docx(filepath)
+        
+        # Process resume
+        contact_info = extract_contact_info(text)
+        skills = extract_skills(text)
+        jobs = scrape_indian_jobs(skills)
+        
+        return jsonify({
+            "success": True,
+            "contact": contact_info,
+            "skills": skills,
+            "jobs": jobs,
+            "next_page": 2  # Initial pagination
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if 'filepath' in locals() and os.path.exists(filepath):
+            os.remove(filepath)
 
-# GUI Setup
-root = tk.Tk()
-root.title("Resume Parser")
-root.geometry("500x200")
+@app.route('/jobs', methods=['GET'])
+def get_more_jobs():
+    skills = request.args.get('skills', '').split(',')
+    page = int(request.args.get('page', 2))
+    
+    try:
+        jobs = scrape_indian_jobs(skills, page)
+        return jsonify({
+            "success": True,
+            "jobs": jobs,
+            "next_page": page + 1
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-tk.Label(root, text="Resume Parser", font=("Arial", 16)).pack(pady=10)
-file_label = tk.Label(root, text="No file selected", font=("Arial", 10))
-file_label.pack(pady=5)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
-browse_button = tk.Button(root, text="Browse Resume", command=browse_file, font=("Arial", 12))
-browse_button.pack(pady=10)
 
-root.mainloop()
