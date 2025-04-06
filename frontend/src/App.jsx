@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import './App.css'
 
 const ResumeScanner = () => {
   const [file, setFile] = useState(null);
@@ -97,23 +98,36 @@ const ResumeScanner = () => {
   };
 
   return (
-    <div className="card resume-scanner">
-      <h1>India Job Finder</h1>
-      
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept=".pdf,.docx"
-        disabled={loading}
-        className="file-input"
-      />
-      <button
-        onClick={handleUpload}
-        disabled={!file || loading}
-      >
-        {loading ? 'Processing...' : 'Scan Resume'}
-      </button>
+    <div>
+      <div>
+        <h1 className="top-heading">India Job Finder</h1>
+      </div>
+
+      <div className="card resume-scanner">
+        <div className='button-class'>
+            <div className="file-upload">
+              <label htmlFor="resume-upload" className="upload-label">
+                📄 Upload Resume
+              </label>
+              <input
+                id="resume-upload"
+                type="file"
+                className="file-hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf,.docx"
+                disabled={loading}
+              />
+            </div>
+          
+          <button
+            onClick={handleUpload}
+            disabled={!file || loading}
+            className='scan-resume-button'
+          >
+            {loading ? 'Processing...' : 'Scan Resume'}
+          </button>
+        </div> 
 
       {error && <p className="error">{error}</p>}
 
@@ -169,11 +183,12 @@ const ResumeScanner = () => {
                 </button>
               </>
             ) :  (
-              <p>No jobs found for your skills</p>
+              <p>⚠️ No jobs found for your skills</p>
             )}
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
