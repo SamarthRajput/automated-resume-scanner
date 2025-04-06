@@ -1,27 +1,53 @@
-Automated-Resume-Scanner 
+# Automated-Resume-Scanner
 
--- Running the backend python server
--  1st Go to the backend folder
-	`cd backend`
+## How to Run the Project
 
-- 2nd run the command to install all the python dependencies
-   `pip3 install -r requirements.txt`
-	OR
-    `pip install -r requirements.txt`
+### Prerequisites
+Ensure you have the following installed on your system:
+- **Python** (3.8 or higher)
+- **Node.js** (14 or higher)
+- **Google Chrome**
 
- the requirements.txt contains the libraries that are needed to be downloaded
+---
 
-- 3rd now run the command to start the backend
-	` python index.py`
-	OR
-    `python3 index.py`
+### Steps to Run the Project
 
+1. **Set Up the Backend**:
+   - Navigate to the backend directory:
+     ```bash
+     cd backend
+     ```
+   - Install the required Python dependencies:
+     ```bash
+     pip install -r requirements.txt
+     ```
+   - Start the backend server:
+     ```bash
+     python index.py
+     ```
 
--- Running the frontend ReactJs code
-	
-- 1st Go to the frontend folder
-	`cd frontend`
-- 2nd Install all the dependencies, Run the command
-	`npm install`
-- 3rd Run the frontend code using the command
-	`npm run dev`
+2. **Set Up the Frontend**:
+   - Open a new terminal and navigate to the frontend directory:
+     ```bash
+     cd frontend
+     ```
+   - Install the required Node.js dependencies:
+     ```bash
+     npm install
+     ```
+   - Start the frontend development server:
+     ```bash
+     npm start
+     ```
+
+3. **Access the Application**:
+   - Open your browser and go to:
+     ```
+     http://localhost:3000
+     ```
+
+---
+
+### Notes
+- Ensure the backend is running on `http://localhost:5000` before starting the frontend.
+- If you encounter any issues, check the terminal logs for errors in the backend or frontend.
