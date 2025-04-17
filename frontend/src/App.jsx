@@ -45,15 +45,18 @@ const ResumeScanner = () => {
 
     setLoading(true);
     setError(null);
-
+    console.log('upload begin.');
     const formData = new FormData();
     formData.append('resume', file);
+    console.log('Formdata created.');
 
     try {
+      console.log('begining send');
       const response = await fetch('http://localhost:5000/upload', {
         method: 'POST',
         body: formData,
       });
+      console.log('upload complete.');
 
       const result = await response.json();
 
